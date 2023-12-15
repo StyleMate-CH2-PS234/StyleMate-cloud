@@ -55,24 +55,22 @@ const storage = new Storage({
 async function loadModelFromGCS(modelName) {
   const bucket = storage.bucket(process.env.GCS_BUCKET_MODEL_NAME);
 
-  const file = bucket.file(modelName);
+  // Download the model.json file
+  const file = bucket.file(`${modelName}/model.json`);
   const modelBuffer = await file.download();
+  fs.writeFileSync(path.join(__dirname, 'model.json'), modelJson);
 
-  // Prepare the model.json file for tf.loadLayersModel
-  const modelJson = JSON.parse(modelBuffer.toString());
-
-  // Use a Blob or File object for the weightsManifest
-  const weightsManifest = modelJson.weightsManifest;
-  const weightsBlob = new Blob([new Uint8Array(weightsManifest)], {type: 'application/octet-stream'});
-
-  // Use tf.io.browserHTTPRequest to load the model from the buffer
-  const model = await tf.loadLayersModel(tf.io.browserHTTPRequest(
-    modelJson.modelTopology,
-    {
-      weightsManifest: weightsBlob,
-      fetchFunc: () => Promise.resolve(new Response(modelBuffer))
+  // Download the weights files
+  const [files] = await bucket.getFiles({ prefix: `${modelName}/` });
+  await Promise.all(files.map(async (file) => {
+    if (file.name.endsWith('.bin')) {
+      const [weights] = await file.download();
+      fs.writeFileSync(path.join(__dirname, path.basename(file.name)), weights);
     }
-  ));
+  }));
+
+  // Load the model from the local files
+  const model = await tf.loadLayersModel('file://'+path.join(__dirname, 'model.json'));
 
   return model;
 }
