@@ -88,17 +88,17 @@ async function loadModelFromGCS(modelName) {
 //   model = await tf.loadLayersModel(modelBufferArray[0]);
 // }
 
-// Load the model
-const model = await tf.loadLayersModel('model.json');
+// // Load the model
+// const model = await tf.loadLayersModel('model.json');
 
-// Pre-process the image
-const imageTensor = tf.browser.decodeImage(imageBuffer, 3);
-const processedImage = await tf.image.resizeBilinear(imageTensor, [224, 224]); // Adjust dimensions as needed
+// // Pre-process the image
+// const imageTensor = tf.browser.decodeImage(imageBuffer, 3);
+// const processedImage = await tf.image.resizeBilinear(imageTensor, [224, 224]); // Adjust dimensions as needed
 
-// Feed the image to the model and obtain predictions
-const predictions = await model.predict(tf.expandDims(processedImage, 0));
+// // Feed the image to the model and obtain predictions
+// const predictions = await model.predict(tf.expandDims(processedImage, 0));
 
-res.json({ predictions });
+// res.json({ predictions });
 
 app.get('/test-model-load', async (req, res) => {
   try {
