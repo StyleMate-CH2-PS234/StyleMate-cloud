@@ -1,6 +1,8 @@
 const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
+const fs = require('fs');
+const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 const tf = require('@tensorflow/tfjs-node');
 const { Storage } = require('@google-cloud/storage');
@@ -56,8 +58,8 @@ async function loadModelFromGCS(modelName) {
   const bucket = storage.bucket(process.env.GCS_BUCKET_MODEL_NAME);
 
   // Download the model.json file
-  const file = bucket.file(`${modelName}/model.json`);
-  const modelBuffer = await file.download();
+  const modelFile = bucket.file(modelName);
+  const [modelJson] = await modelFile.download();
   fs.writeFileSync(path.join(__dirname, 'model.json'), modelJson);
 
   // Download the weights files
