@@ -3,12 +3,9 @@ const cors = require('cors');
 const multer = require('multer');
 const fs = require('fs');
 const path = require('path');
-const { v4: uuidv4 } = require('uuid');
 const tf = require('@tensorflow/tfjs-node');
 const { Storage } = require('@google-cloud/storage');
 require('dotenv').config();
-
-// const serviceAccountPath = path.join(__dirname, process.env.GCP_SERVICE_ACCOUNT_FILE_PATH);
 
 const app = express();
 app.use(cors());
@@ -53,36 +50,6 @@ app.post('/uploadImage', upload.single('image'), async (req, res) => {
     console.error(error);
     res.status(500).json({ message: 'An error occurred while processing the image.' });
   }
-  
-    // const imageFile = req.file;
-    // // Read the image data
-    // const imageBuffer = await fs.promises.readFile(imageFile.path);
-    // // Get name of image
-    // const fileName = req.file.originalname;
-    // console.log(`Extension: ${fileName}`);
-    // // Get extension
-    // const extension = path.extname(req.file.originalname);
-    // console.log(`Extension: ${extension}`);
-    // // Generate a UUID and change photo name to UUID.extension
-    // const uuid = uuidv4();
-    // const uniqueFileName = `${uuid}${extension}`;
-
-    // // Get a bucket and file reference
-    // const bucket = storage.bucket(process.env.GCS_BUCKET_NAME);
-    // const file = bucket.file(uniqueFileName);
-
-    // // Upload the image to GCS
-    // await file.save(imageBuffer);
-
-    // // Delete the temporary file
-    // await fs.promises.unlink(imageFile.path);
-
-    // // Return a response with the image URL in GCS
-    // const imageUrl = `https://storage.googleapis.com/${bucket.name}/${file.name}`;
-    // // res.json({ imageUrl });
-
-    // const model = await loadModelFromGCS(modelName);
-    // console.log('Model loaded successfully!');
 });
 
 const storage = new Storage({
@@ -126,29 +93,6 @@ async function loadModelFromGCS(modelName) {
 
     return model;
 }
-// async function loadModelFromGCS(modelName) {
-//   const bucket = storage.bucket(process.env.GCS_BUCKET_MODEL_NAME);
-
-//   const file = bucket.file(modelName);
-//   const modelBuffer = await file.download();
-
-//   // return tf.loadLayersModel(tf.node.decodeWeights(modelBuffer[0]));
-//   // Decode and load model weights
-//   const modelBufferArray = await tf.node.decodeWeights(modelBuffer);
-//   model = await tf.loadLayersModel(modelBufferArray[0]);
-// }
-
-// // Load the model
-// const model = await tf.loadLayersModel('model.json');
-
-// // Pre-process the image
-// const imageTensor = tf.browser.decodeImage(imageBuffer, 3);
-// const processedImage = await tf.image.resizeBilinear(imageTensor, [224, 224]); // Adjust dimensions as needed
-
-// // Feed the image to the model and obtain predictions
-// const predictions = await model.predict(tf.expandDims(processedImage, 0));
-
-// res.json({ predictions });
 
 app.get('/test-model-load', async (req, res) => {
     try {
@@ -159,6 +103,11 @@ app.get('/test-model-load', async (req, res) => {
         console.error('Error loading model:', error);
         res.status(500).json({ message: 'Error loading model' });
     }
+});
+
+app.get('/model', async (req, res) => {
+    const modelJsonPath = path.join(__dirname, 'uploads', 'model.json');
+    res.sendFile(modelJsonPath);
 });
 
 app.get('/', (req, res) => {
