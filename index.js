@@ -24,16 +24,17 @@ app.post('/uploadImage', upload.single('image'), async (req, res) => {
 
   try {
     const imageFile = req.file;
-    // Read the image data
-    const imageBuffer = await fs.promises.readFile(imageFile.path);
-
+    
     // Validate the file
     if (!imageFile.originalname.match(/\.(jpg|jpeg|png)$/)) {
       return res.status(400).json({ message: 'Only image files are allowed!' });
     }
 
+    // Read the image data
+    const imageBuffer = await fs.promises.readFile(imageFile.path);
+
     // Process the image
-    const imageTensor = tf.browser.decodeImage(imageBuffer, 3);
+    const imageTensor = tf.node.decodeImage(imageBuffer, 3);
     const processedImage = await tf.image.resizeBilinear(imageTensor, [224, 224]); // Adjust dimensions as needed
 
     // Load the model
