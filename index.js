@@ -18,12 +18,12 @@ const uploadStorage = multer.diskStorage({
     filename: function (req, file, cb) {
         cb(null, file.originalname)
     }
-})
+});
 
-const upload = multer({ storage: uploadStorage });
+const upload = multer({ storage: uploadStorage }).single('image');
 const modelName = process.env.MODEL_FILE_NAME;
 
-app.post('/uploadImage', upload.single('image'), async (req, res) => {
+app.post('/uploadImage', upload, async (req, res, next) => {
     if (!req.file) {
         return res.status(400).json({ message: 'No image uploaded!' });
     }
@@ -85,6 +85,15 @@ app.post('/uploadImage', upload.single('image'), async (req, res) => {
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'An error occurred while processing the image.' });
+    }
+}, (error, req, res, next) => {
+    // This is the error handling middleware
+    if (error instanceof multer.MulterError) {
+        // A Multer error occurred when uploading.
+        res.status(500).json({ message: error.message });
+    } else if (error) {
+        // An unknown error occurred when uploading.
+        res.status(500).json({ message: error.message });
     }
 });
 
