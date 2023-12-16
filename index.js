@@ -97,24 +97,28 @@ async function loadModelFromGCS(modelName) {
 
     // Download the model.json file
     const modelFile = bucket.file(modelName);
-    const [modelJson] = await modelFile.download();
-    fs.writeFileSync(path.join(uploadDir, 'model.json'), modelJson);
+    const modelJsonPath = path.join(uploadDir, 'model.json');
+    if (!fs.existsSync(modelJsonPath)) {
+        const [modelJson] = await modelFile.download();
+        fs.writeFileSync(modelJsonPath, modelJson);
+    }
 
     // Download the weights files
     const [files] = await bucket.getFiles();
     const weightsFiles = files.filter(file => file.name.startsWith('group') && file.name.endsWith('.bin'));
-    // const [files] = await bucket.getFiles({ prefix: `${modelName}/` });
     await Promise.all(weightsFiles.map(async (file) => {
         if (file.name.endsWith('.bin')) {
-            const [weights] = await file.download();
-            fs.writeFileSync(path.join(uploadDir, path.basename(file.name)), weights);
-            const filePath = path.join(uploadDir, path.basename(file.name));
-            console.log(`Downloaded ${file.name} to ${filePath}`);
+            const weightsFilePath = path.join(uploadDir, path.basename(file.name));
+            if (!fs.existsSync(weightsFilePath)) {
+                const [weights] = await file.download();
+                fs.writeFileSync(weightsFilePath, weights);
+                console.log(`Downloaded ${file.name} to ${weightsFilePath}`);
+            }
         }
     }));
 
     // Load the model from the local files
-    const model = await tf.loadLayersModel('file://' + path.join(uploadDir, 'model.json'));
+    const model = await tf.loadLayersModel('file://' + modelJsonPath);
 
     return model;
 }
