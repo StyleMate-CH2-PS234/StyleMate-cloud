@@ -86,7 +86,7 @@ app.post('/uploadImage', upload.single('image'), async (req, res) => {
 });
 
 const storage = new Storage({
-    keyFilename: process.env.GCP_SERVICE_ACCOUNT_FILE_PATH,
+    keyFilename: "./config/config.json",
 });
 
 // Func to load model from Google Cloud Storage
