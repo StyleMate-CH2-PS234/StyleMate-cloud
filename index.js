@@ -30,24 +30,24 @@ app.post('/uploadImage', upload, async (req, res, next) => {
 
     try {
         const imageFile = req.file;
-
+        
         // Validate the file
         if (!imageFile.originalname.match(/\.(jpg|jpeg|png)$/)) {
             return res.status(400).json({ message: 'Only image files are allowed!' });
         }
 
+        // Create the photos directory if it doesn't exist
+        const files = fs.readdirSync('uploads/');
+        console.log('Files in photos:');
+        files.forEach(file => console.log(file));
+
         // Read the image data
-        const imageBuffer = await fs.promises.readFile(imageFile.path);
         if (fs.existsSync(imageFile.path)) {
             console.log(`File ${imageFile.path} exists!`);
         } else {
             console.error(`File ${imageFile.path} does not exist!`);
         }
-
-        const files = fs.readdirSync('uploads/');
-
-        console.log('Files in photos:');
-        files.forEach(file => console.log(file));
+        const imageBuffer = await fs.promises.readFile(imageFile.path);
 
         // Process the image
         const imageTensor = tf.node.decodeImage(imageBuffer, 3);
