@@ -76,6 +76,8 @@ async function loadModelFromGCS(modelName) {
     if (file.name.endsWith('.bin')) {
       const [weights] = await file.download();
       fs.writeFileSync(path.join(uploadDir, path.basename(file.name)), weights);
+      const filePath = path.join(uploadDir, path.basename(file.name));
+      console.log(`Downloaded ${file.name} to ${filePath}`);
     }
   }));
 
