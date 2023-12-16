@@ -44,8 +44,7 @@ app.post('/uploadImage', upload.single('image'), async (req, res) => {
     // const processedImage = await tf.image.resizeBilinear(imageTensor, [224, 224]); // Adjust dimensions as needed
 
     const predictedClass = tf.tidy(() => {
-        const activation = mobilenet.predict(imageTensor);
-        const predictions = model.predict(activation);
+        const predictions = model.predict(imageTensor);
         return predictions.as1D().argMax();
       });
 
