@@ -56,7 +56,19 @@ app.post('/uploadImage', upload.single('image'), async (req, res) => {
 
     const classId = (await predictedClass.data())[0];
 
-    res.json({ classId });
+    switch(classId){
+		case 0:
+			predictionText = "Heart";
+			break;
+		case 1:
+			predictionText = "Round";
+			break;
+		case 2:
+			predictionText = "Square";
+			break;
+	}
+
+    res.json({ classId , predictionText });
 
     // // Feed the image to the model and obtain predictions
     // const predictions = await model.predict(tf.expandDims(processedImage, 0));
