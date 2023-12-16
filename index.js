@@ -42,9 +42,12 @@ app.post('/uploadImage', upload.single('image'), async (req, res) => {
     // Feed the image to the model and obtain predictions
     const predictions = await model.predict(tf.expandDims(processedImage, 0));
 
-    // Return a response with the image URL in GCS
-    const imageUrl = `https://storage.googleapis.com/${bucket.name}/${file.name}`;
-    res.json({ imageUrl });
+    // Delete the temporary file
+    await fs.promises.unlink(imageFile.path);
+
+    // Return the predictions
+    res.json({ predictions });
+
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'An error occurred while processing the image.' });
