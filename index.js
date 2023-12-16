@@ -18,73 +18,73 @@ const upload = multer({ dest: 'uploads/' });
 const modelName = process.env.MODEL_FILE_NAME;
 
 app.post('/uploadImage', upload.single('image'), async (req, res) => {
-  const imageFile = req.file;
-  // Read the image data
-  const imageBuffer = await fs.promises.readFile(imageFile.path);
-  // Get name of image
-  const fileName = req.file.originalname;
-  console.log(`Extension: ${fileName}`);
-  // Get extension
-  const extension = path.extname(req.file.originalname);
-  console.log(`Extension: ${extension}`);
-  // Generate a UUID and change photo name to UUID.extension
-  const uuid = uuidv4();
-  const uniqueFileName = `${uuid}${extension}`;
+    const imageFile = req.file;
+    // Read the image data
+    const imageBuffer = await fs.promises.readFile(imageFile.path);
+    // Get name of image
+    const fileName = req.file.originalname;
+    console.log(`Extension: ${fileName}`);
+    // Get extension
+    const extension = path.extname(req.file.originalname);
+    console.log(`Extension: ${extension}`);
+    // Generate a UUID and change photo name to UUID.extension
+    const uuid = uuidv4();
+    const uniqueFileName = `${uuid}${extension}`;
 
-  // Get a bucket and file reference
-  const bucket = storage.bucket(process.env.GCS_BUCKET_NAME);
-  const file = bucket.file(uniqueFileName);
+    // Get a bucket and file reference
+    const bucket = storage.bucket(process.env.GCS_BUCKET_NAME);
+    const file = bucket.file(uniqueFileName);
 
-  // Upload the image to GCS
-  await file.save(imageBuffer);
+    // Upload the image to GCS
+    await file.save(imageBuffer);
 
-  // Delete the temporary file
-  await fs.promises.unlink(imageFile.path);
+    // Delete the temporary file
+    await fs.promises.unlink(imageFile.path);
 
-  // Return a response with the image URL in GCS
-  const imageUrl = `https://storage.googleapis.com/${bucket.name}/${file.name}`;
-  // res.json({ imageUrl });
+    // Return a response with the image URL in GCS
+    const imageUrl = `https://storage.googleapis.com/${bucket.name}/${file.name}`;
+    // res.json({ imageUrl });
 
-  const model = await loadModelFromGCS(modelName);
-  console.log('Model loaded successfully!');
+    const model = await loadModelFromGCS(modelName);
+    console.log('Model loaded successfully!');
 });
 
 const storage = new Storage({
-  keyFilename: process.env.GCP_SERVICE_ACCOUNT_FILE_PATH,
+    keyFilename: process.env.GCP_SERVICE_ACCOUNT_FILE_PATH,
 });
 
 // Func to load model from Google Cloud Storage
 async function loadModelFromGCS(modelName) {
-  const bucket = storage.bucket(process.env.GCS_BUCKET_MODEL_NAME);
+    const bucket = storage.bucket(process.env.GCS_BUCKET_MODEL_NAME);
 
-  // Create the photos directory if it doesn't exist
-  const uploadDir = path.join(__dirname, 'uploads');
-  if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir);
-  }
-
-  // Download the model.json file
-  const modelFile = bucket.file(modelName);
-  const [modelJson] = await modelFile.download();
-  fs.writeFileSync(path.join(uploadDir, 'model.json'), modelJson);
-
-  // Download the weights files
-  const [files] = await bucket.getFiles();
-  const weightsFiles = files.filter(file => file.name.startsWith('group') && file.name.endsWith('.bin'));
-  // const [files] = await bucket.getFiles({ prefix: `${modelName}/` });
-  await Promise.all(weightsFiles.map(async (file) => {
-    if (file.name.endsWith('.bin')) {
-      const [weights] = await file.download();
-      fs.writeFileSync(path.join(uploadDir, path.basename(file.name)), weights);
-      const filePath = path.join(uploadDir, path.basename(file.name));
-      console.log(`Downloaded ${file.name} to ${filePath}`);
+    // Create the photos directory if it doesn't exist
+    const uploadDir = path.join(__dirname, 'uploads');
+    if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir);
     }
-  }));
 
-  // Load the model from the local files
-  const model = await tf.loadLayersModel('file://'+path.join(uploadDir, 'model.json'));
+    // Download the model.json file
+    const modelFile = bucket.file(modelName);
+    const [modelJson] = await modelFile.download();
+    fs.writeFileSync(path.join(uploadDir, 'model.json'), modelJson);
 
-  return model;
+    // Download the weights files
+    const [files] = await bucket.getFiles();
+    const weightsFiles = files.filter(file => file.name.startsWith('group') && file.name.endsWith('.bin'));
+    // const [files] = await bucket.getFiles({ prefix: `${modelName}/` });
+    await Promise.all(weightsFiles.map(async (file) => {
+        if (file.name.endsWith('.bin')) {
+            const [weights] = await file.download();
+            fs.writeFileSync(path.join(uploadDir, path.basename(file.name)), weights);
+            const filePath = path.join(uploadDir, path.basename(file.name));
+            console.log(`Downloaded ${file.name} to ${filePath}`);
+        }
+    }));
+
+    // Load the model from the local files
+    const model = await tf.loadLayersModel('file://' + path.join(uploadDir, 'model.json'));
+
+    return model;
 }
 // async function loadModelFromGCS(modelName) {
 //   const bucket = storage.bucket(process.env.GCS_BUCKET_MODEL_NAME);
@@ -111,14 +111,14 @@ async function loadModelFromGCS(modelName) {
 // res.json({ predictions });
 
 app.get('/test-model-load', async (req, res) => {
-  try {
-    const model = await loadModelFromGCS(process.env.MODEL_FILE_NAME);
-    console.log('Model loaded successfully!');
-    res.status(200).send('Model loaded successfully!');
-  } catch (error) {
-    console.error(error);
-    res.status(500).send('Error loading model!');
-  }
+    try {
+        const model = await loadModelFromGCS(process.env.MODEL_FILE_NAME);
+        console.log('Model loaded successfully!');
+        res.status(200).send('Model loaded successfully!');
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Error loading model!');
+    }
 });
 
 app.listen(PORT, () => console.log('Server listening on port 3000'));
