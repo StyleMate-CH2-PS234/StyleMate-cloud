@@ -63,12 +63,14 @@ async function loadModelFromGCS(modelName) {
   fs.writeFileSync(path.join(__dirname, 'model.json'), modelJson);
 
   // Download the weights files
-  const [files] = await bucket.getFiles({ prefix: `${modelName}/` });
+  const [files] = await bucket.getFiles();
   await Promise.all(files.map(async (file) => {
     if (file.name.endsWith('.bin')) {
-      const [weights] = await file.download();
-      fs.writeFileSync(path.join(__dirname, path.basename(file.name)), weights);
-    }
+        const [weights] = await file.download();
+        const filePath = path.join(__dirname, path.basename(file.name));
+        fs.writeFileSync(filePath, weights);
+        console.log(`Downloaded ${file.name} to ${filePath}`);
+      }
   }));
 
   // Load the model from the local files
