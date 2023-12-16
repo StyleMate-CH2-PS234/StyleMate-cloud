@@ -41,6 +41,7 @@ app.post('/uploadImage', upload.single('image'), async (req, res) => {
     
     // Process the image
     const imageTensor = tf.node.decodeImage(imageBuffer, 3);
+    const imageBatch = tf.expandDims(imageTensor, 0);
     // const processedImage = await tf.image.resizeBilinear(imageTensor, [224, 224]); // Adjust dimensions as needed
     
     // Load the model
@@ -48,7 +49,7 @@ app.post('/uploadImage', upload.single('image'), async (req, res) => {
     console.log('Model loaded successfully!');
 
     const predictedClass = tf.tidy(() => {
-        const predictions = model.predict(imageTensor);
+        const predictions = model.predict(imageBatch);
         return predictions.as1D().argMax();
       });
 
@@ -109,6 +110,9 @@ async function loadModelFromGCS(modelName) {
 
     // Load the model from the local files
     const model = await tf.loadLayersModel('file://' + modelJsonPath);
+    console.log(model.summary());
+    console.log(model.getWeights());
+    console.log(modelJsonPath);
 
     return model;
 }
