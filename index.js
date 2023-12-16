@@ -41,8 +41,8 @@ app.post('/uploadImage', upload.single('image'), async (req, res) => {
     
     // Process the image
     const imageTensor = tf.node.decodeImage(imageBuffer, 3);
-    const imageBatch = tf.expandDims(imageTensor, 0);
-    // const processedImage = await tf.image.resizeBilinear(imageTensor, [224, 224]); // Adjust dimensions as needed
+    const processedImage = await tf.image.resizeBilinear(imageTensor, [224, 224]); // Adjust dimensions as needed
+    const imageBatch = tf.expandDims(processedImage, 0);
     
     // Load the model
     const model = await loadModelFromGCS(modelName);
