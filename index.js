@@ -11,7 +11,16 @@ const app = express();
 app.use(cors());
 const PORT = process.env.PORT || 3000;
 
-const upload = multer({ dest: 'uploads/' });
+const uploadStorage = multer.diskStorage({
+    destination: function (req, file, cb) {
+      cb(null, 'uploads/images')
+    },
+    filename: function (req, file, cb) {
+      cb(null, file.originalname)
+    }
+  })
+  
+const upload = multer({ storage: uploadStorage });
 const modelName = process.env.MODEL_FILE_NAME;
 
 app.post('/uploadImage', upload.single('image'), async (req, res) => {
@@ -32,19 +41,29 @@ app.post('/uploadImage', upload.single('image'), async (req, res) => {
 
     // Process the image
     const imageTensor = tf.node.decodeImage(imageBuffer, 3);
-    const processedImage = await tf.image.resizeBilinear(imageTensor, [224, 224]); // Adjust dimensions as needed
+    // const processedImage = await tf.image.resizeBilinear(imageTensor, [224, 224]); // Adjust dimensions as needed
 
-    // Load the model
-    const model = await loadModelFromGCS(modelName);
-    console.log('Model loaded successfully!');
-    // Feed the image to the model and obtain predictions
-    const predictions = await model.predict(tf.expandDims(processedImage, 0));
+    const predictedClass = tf.tidy(() => {
+        const activation = mobilenet.predict(imageTensor);
+        const predictions = model.predict(activation);
+        return predictions.as1D().argMax();
+      });
 
-    // Delete the temporary file
-    await fs.promises.unlink(imageFile.path);
+      const classId = (await predictedClass.data())[0];
 
-    // Return the predictions
-    res.json({ predictions });
+      res.json({ classId, predictions });
+
+    // // Load the model
+    // const model = await loadModelFromGCS(modelName);
+    // console.log('Model loaded successfully!');
+    // // Feed the image to the model and obtain predictions
+    // const predictions = await model.predict(tf.expandDims(processedImage, 0));
+
+    // // Delete the temporary file
+    // await fs.promises.unlink(imageFile.path);
+
+    // // Return the predictions
+    // res.json({ predictions });
 
   } catch (error) {
     console.error(error);
