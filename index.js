@@ -38,23 +38,24 @@ app.post('/uploadImage', upload.single('image'), async (req, res) => {
 
     // Read the image data
     const imageBuffer = await fs.promises.readFile(imageFile.path);
-
+    
     // Process the image
     const imageTensor = tf.node.decodeImage(imageBuffer, 3);
     // const processedImage = await tf.image.resizeBilinear(imageTensor, [224, 224]); // Adjust dimensions as needed
+    
+    // Load the model
+    const model = await loadModelFromGCS(modelName);
+    console.log('Model loaded successfully!');
 
     const predictedClass = tf.tidy(() => {
         const predictions = model.predict(imageTensor);
         return predictions.as1D().argMax();
       });
 
-      const classId = (await predictedClass.data())[0];
+    const classId = (await predictedClass.data())[0];
 
-      res.json({ classId, predictions });
+    res.json({ classId, predictions });
 
-    // // Load the model
-    // const model = await loadModelFromGCS(modelName);
-    // console.log('Model loaded successfully!');
     // // Feed the image to the model and obtain predictions
     // const predictions = await model.predict(tf.expandDims(processedImage, 0));
 
