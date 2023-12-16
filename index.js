@@ -18,35 +18,67 @@ const upload = multer({ dest: 'uploads/' });
 const modelName = process.env.MODEL_FILE_NAME;
 
 app.post('/uploadImage', upload.single('image'), async (req, res) => {
+  if (!req.file) {
+    return res.status(400).send('No file uploaded.');
+  }
+
+  try {
     const imageFile = req.file;
     // Read the image data
     const imageBuffer = await fs.promises.readFile(imageFile.path);
-    // Get name of image
-    const fileName = req.file.originalname;
-    console.log(`Extension: ${fileName}`);
-    // Get extension
-    const extension = path.extname(req.file.originalname);
-    console.log(`Extension: ${extension}`);
-    // Generate a UUID and change photo name to UUID.extension
-    const uuid = uuidv4();
-    const uniqueFileName = `${uuid}${extension}`;
 
-    // Get a bucket and file reference
-    const bucket = storage.bucket(process.env.GCS_BUCKET_NAME);
-    const file = bucket.file(uniqueFileName);
+    // Validate the file
+    if (!imageFile.originalname.match(/\.(jpg|jpeg|png)$/)) {
+      return res.status(400).send('Only image files are allowed!');
+    }
 
-    // Upload the image to GCS
-    await file.save(imageBuffer);
+    // Process the image
+    const imageTensor = tf.browser.decodeImage(imageBuffer, 3);
+    const processedImage = await tf.image.resizeBilinear(imageTensor, [224, 224]); // Adjust dimensions as needed
 
-    // Delete the temporary file
-    await fs.promises.unlink(imageFile.path);
+    // Load the model
+    const model = await loadModelFromGCS(modelName);
+    console.log('Model loaded successfully!');
+    // Feed the image to the model and obtain predictions
+    const predictions = await model.predict(tf.expandDims(processedImage, 0));
 
     // Return a response with the image URL in GCS
     const imageUrl = `https://storage.googleapis.com/${bucket.name}/${file.name}`;
-    // res.json({ imageUrl });
+    res.json({ imageUrl });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('An error occurred while processing the image.');
+  }
+  
+    // const imageFile = req.file;
+    // // Read the image data
+    // const imageBuffer = await fs.promises.readFile(imageFile.path);
+    // // Get name of image
+    // const fileName = req.file.originalname;
+    // console.log(`Extension: ${fileName}`);
+    // // Get extension
+    // const extension = path.extname(req.file.originalname);
+    // console.log(`Extension: ${extension}`);
+    // // Generate a UUID and change photo name to UUID.extension
+    // const uuid = uuidv4();
+    // const uniqueFileName = `${uuid}${extension}`;
 
-    const model = await loadModelFromGCS(modelName);
-    console.log('Model loaded successfully!');
+    // // Get a bucket and file reference
+    // const bucket = storage.bucket(process.env.GCS_BUCKET_NAME);
+    // const file = bucket.file(uniqueFileName);
+
+    // // Upload the image to GCS
+    // await file.save(imageBuffer);
+
+    // // Delete the temporary file
+    // await fs.promises.unlink(imageFile.path);
+
+    // // Return a response with the image URL in GCS
+    // const imageUrl = `https://storage.googleapis.com/${bucket.name}/${file.name}`;
+    // // res.json({ imageUrl });
+
+    // const model = await loadModelFromGCS(modelName);
+    // console.log('Model loaded successfully!');
 });
 
 const storage = new Storage({
