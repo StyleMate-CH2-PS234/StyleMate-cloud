@@ -157,4 +157,8 @@ app.get('/test-model-load', async (req, res) => {
     }
 });
 
+app.get('/', (req, res) => {
+    res.status(200).json({ message: 'API Server Alive!' });
+});
+
 app.listen(PORT, () => console.log('Server listening on port 3000'));
