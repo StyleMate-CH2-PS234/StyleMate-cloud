@@ -19,7 +19,7 @@ const modelName = process.env.MODEL_FILE_NAME;
 
 app.post('/uploadImage', upload.single('image'), async (req, res) => {
   if (!req.file) {
-    return res.status(400).send('No file uploaded.');
+    return res.status(400).json({ message: 'No image uploaded!' });
   }
 
   try {
@@ -29,7 +29,7 @@ app.post('/uploadImage', upload.single('image'), async (req, res) => {
 
     // Validate the file
     if (!imageFile.originalname.match(/\.(jpg|jpeg|png)$/)) {
-      return res.status(400).send('Only image files are allowed!');
+      return res.status(400).json({ message: 'Only image files are allowed!' });
     }
 
     // Process the image
@@ -47,7 +47,7 @@ app.post('/uploadImage', upload.single('image'), async (req, res) => {
     res.json({ imageUrl });
   } catch (error) {
     console.error(error);
-    res.status(500).send('An error occurred while processing the image.');
+    res.status(500).json({ message: 'An error occurred while processing the image.' });
   }
   
     // const imageFile = req.file;
@@ -150,10 +150,10 @@ app.get('/test-model-load', async (req, res) => {
     try {
         const model = await loadModelFromGCS(process.env.MODEL_FILE_NAME);
         console.log('Model loaded successfully!');
-        res.status(200).send('Model loaded successfully!');
+        res.status(200).json({ message: 'Model loaded successfully!' });
     } catch (error) {
-        console.error(error);
-        res.status(500).send('Error loading model!');
+        console.error('Error loading model:', error);
+        res.status(500).json({ message: 'Error loading model' });
     }
 });
 
