@@ -13,76 +13,79 @@ const PORT = process.env.PORT || 3000;
 
 const uploadStorage = multer.diskStorage({
     destination: function (req, file, cb) {
-      cb(null, './uploads/images')
+        cb(null, './uploads/images')
     },
     filename: function (req, file, cb) {
-      cb(null, file.originalname)
+        cb(null, file.originalname)
     }
-  })
-  
+})
+
 const upload = multer({ storage: uploadStorage });
 const modelName = process.env.MODEL_FILE_NAME;
 
 app.post('/uploadImage', upload.single('image'), async (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ message: 'No image uploaded!' });
-  }
-
-  try {
-    const imageFile = req.file;
-    
-    // Validate the file
-    if (!imageFile.originalname.match(/\.(jpg|jpeg|png)$/)) {
-      return res.status(400).json({ message: 'Only image files are allowed!' });
+    if (!req.file) {
+        return res.status(400).json({ message: 'No image uploaded!' });
     }
 
-    // Read the image data
-    const imageBuffer = await fs.promises.readFile(imageFile.path);
-    
-    // Process the image
-    const imageTensor = tf.node.decodeImage(imageBuffer, 3);
-    const processedImage = await tf.image.resizeBilinear(imageTensor, [224, 224]); // Adjust dimensions as needed
-    const imageBatch = tf.expandDims(processedImage, 0);
-    
-    // Load the model
-    const model = await loadModelFromGCS(modelName);
-    console.log('Model loaded successfully!');
+    try {
+        const imageFile = req.file;
 
-    // predict the class
-    const predictedClass = tf.tidy(() => {
-        const predictions = model.predict(imageBatch);
-        return predictions.as1D().argMax();
-      });
+        // Validate the file
+        if (!imageFile.originalname.match(/\.(jpg|jpeg|png)$/)) {
+            return res.status(400).json({ message: 'Only image files are allowed!' });
+        }
 
-    const classId = (await predictedClass.data())[0];
+        // Read the image data
+        const imageBuffer = await fs.promises.readFile(imageFile.path);
+        if (fs.existsSync(imageFile.path)) {
+            console.log(`File ${imageFile.path} exists!`);
+        } else {
+            console.error(`File ${imageFile.path} does not exist!`);
+        }
 
-    switch(classId){
-		case 0:
-			predictionText = "Heart";
-			break;
-		case 1:
-			predictionText = "Round";
-			break;
-		case 2:
-			predictionText = "Square";
-			break;
-	}
+        const files = fs.readdirSync('uploads/');
 
-    res.json({ classId , predictionText });
+        console.log('Files in photos:');
+        files.forEach(file => console.log(file));
 
-    // // Feed the image to the model and obtain predictions
-    // const predictions = await model.predict(tf.expandDims(processedImage, 0));
+        // Process the image
+        const imageTensor = tf.node.decodeImage(imageBuffer, 3);
+        const processedImage = await tf.image.resizeBilinear(imageTensor, [224, 224]); // Adjust dimensions as needed
+        const imageBatch = tf.expandDims(processedImage, 0);
 
-    // // Delete the temporary file
-    // await fs.promises.unlink(imageFile.path);
+        // Load the model
+        const model = await loadModelFromGCS(modelName);
+        console.log('Model loaded successfully!');
 
-    // // Return the predictions
-    // res.json({ predictions });
+        // predict the class
+        const predictedClass = tf.tidy(() => {
+            const predictions = model.predict(imageBatch);
+            return predictions.as1D().argMax();
+        });
 
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'An error occurred while processing the image.' });
-  }
+        const classId = (await predictedClass.data())[0];
+
+        switch (classId) {
+            case 0:
+                predictionText = "Heart";
+                break;
+            case 1:
+                predictionText = "Round";
+                break;
+            case 2:
+                predictionText = "Square";
+                break;
+        }
+
+        res.json({ classId, predictionText });
+
+        // // Delete the temporary file
+        // await fs.promises.unlink(imageFile.path);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'An error occurred while processing the image.' });
+    }
 });
 
 const storage = new Storage({
@@ -123,14 +126,14 @@ async function loadModelFromGCS(modelName) {
 
     // Load the model from the local files
     const model = await tf.loadLayersModel('file://' + modelJsonPath);
-    console.log(model.summary());
-    console.log(model.getWeights());
-    console.log(modelJsonPath);
+    // console.log(model.summary());
+    // console.log(model.getWeights());
+    // console.log(modelJsonPath);
 
     return model;
 }
 
-app.get('/test-model-load', async (req, res) => {
+app.get('/load-model', async (req, res) => {
     try {
         const model = await loadModelFromGCS(process.env.MODEL_FILE_NAME);
         console.log('Model loaded successfully!');
