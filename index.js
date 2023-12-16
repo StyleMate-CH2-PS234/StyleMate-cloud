@@ -48,8 +48,11 @@ app.post('/uploadImage', upload.single('image'), async (req, res) => {
     const model = await loadModelFromGCS(modelName);
     console.log('Model loaded successfully!');
 
+    let predictions = [];
+
+    // predict the class
     const predictedClass = tf.tidy(() => {
-        const predictions = model.predict(imageBatch);
+        predictions = model.predict(imageBatch);
         return predictions.as1D().argMax();
       });
 
