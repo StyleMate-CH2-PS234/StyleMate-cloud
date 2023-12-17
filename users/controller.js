@@ -1,6 +1,6 @@
 const express = require('express');
 const firebaseApp = require('./../firebase');
-const { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } = require("firebase/auth");
+const { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } = require("firebase/auth");
 
 const login = (req, res) => {
 
@@ -34,9 +34,14 @@ const register = (req, res) => {
 
     const auth = getAuth();
     createUserWithEmailAndPassword(auth, req.body.email, req.body.password)
-    .then((userCredential) => {
+    .then(async (userCredential) => {
         // Signed up 
         const user = userCredential.user;
+
+
+        await updateProfile(user, {
+            displayName: req.body.name,
+        });
         // ...
         res.status(201);
         res.json({
