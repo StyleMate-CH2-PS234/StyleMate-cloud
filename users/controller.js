@@ -1,5 +1,5 @@
 const express = require('express');
-const firebaseApp = require('./../firebase');
+const firebaseApp = require('../config/firebase');
 const { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } = require("firebase/auth");
 
 const login = (req, res) => {
