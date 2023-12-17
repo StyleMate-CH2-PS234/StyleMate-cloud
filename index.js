@@ -18,36 +18,36 @@ const uploadStorage = multer.diskStorage({
     filename: function (req, file, cb) {
         cb(null, file.originalname)
     }
-})
+});
 
-const upload = multer({ storage: uploadStorage });
+const upload = multer({ storage: uploadStorage }).single('image');
 const modelName = process.env.MODEL_FILE_NAME;
 
-app.post('/uploadImage', upload.single('image'), async (req, res) => {
+app.post('/uploadImage', upload, async (req, res, next) => {
     if (!req.file) {
         return res.status(400).json({ message: 'No image uploaded!' });
     }
 
     try {
         const imageFile = req.file;
-
+        
         // Validate the file
         if (!imageFile.originalname.match(/\.(jpg|jpeg|png)$/)) {
             return res.status(400).json({ message: 'Only image files are allowed!' });
         }
 
+        // Create the photos directory if it doesn't exist
+        const files = fs.readdirSync('uploads/');
+        console.log('Files in photos:');
+        files.forEach(file => console.log(file));
+
         // Read the image data
-        const imageBuffer = await fs.promises.readFile(imageFile.path);
         if (fs.existsSync(imageFile.path)) {
             console.log(`File ${imageFile.path} exists!`);
         } else {
             console.error(`File ${imageFile.path} does not exist!`);
         }
-
-        const files = fs.readdirSync('uploads/');
-
-        console.log('Files in photos:');
-        files.forEach(file => console.log(file));
+        const imageBuffer = await fs.promises.readFile(imageFile.path);
 
         // Process the image
         const imageTensor = tf.node.decodeImage(imageBuffer, 3);
@@ -85,6 +85,15 @@ app.post('/uploadImage', upload.single('image'), async (req, res) => {
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'An error occurred while processing the image.' });
+    }
+}, (error, req, res, next) => {
+    // This is the error handling middleware
+    if (error instanceof multer.MulterError) {
+        // A Multer error occurred when uploading.
+        res.status(500).json({ message: error.message });
+    } else if (error) {
+        // An unknown error occurred when uploading.
+        res.status(500).json({ message: error.message });
     }
 });
 
