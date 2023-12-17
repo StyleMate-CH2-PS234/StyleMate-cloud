@@ -1,19 +1,11 @@
 const express = require('express');
 // const firebaseApp = require('../config/firebase');
 const { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } = require("firebase/auth");
-
-const uploadStorage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, './uploads/images')
-    },
-    filename: function (req, file, cb) {
-        cb(null, file.originalname)
-    }
-});
+const multerMiddleware = require('./multerMiddleware');
 
 const modelName = process.env.MODEL_FILE_NAME;
 const storage = new Storage({
-    keyFilename: "./config/config.json",
+    keyFilename: "./config/cloud-storage.json",
 });
 
 // Func to load model from Google Cloud Storage
@@ -57,63 +49,68 @@ async function loadModelFromGCS(modelName) {
 const login = (req, res) => {
     const auth = getAuth();
     signInWithEmailAndPassword(auth, req.body.email, req.body.password)
-    .then((userCredential) => {
-        // Signed in 
-        const user = userCredential.user;
-        // ...
-        res.status(200);
-        res.json({
-            'success': true,
-            'data': user,
-            'errors': null
+        .then((userCredential) => {
+            // Signed in 
+            const user = userCredential.user;
+            // ...
+            res.status(200);
+            res.json({
+                'success': true,
+                'data': user,
+                'errors': null
+            });
+        })
+        .catch((error) => {
+            const errorCode = error.code;
+            const errorMessage = error.message;
+            res.status(200);
+            res.json({
+                'success': false,
+                'errors': errorMessage,
+            });
         });
-    })
-    .catch((error) => {
-        const errorCode = error.code;
-        const errorMessage = error.message;
-        res.status(200);
-        res.json({
-            'success': false,
-            'errors': errorMessage,
-        });
-    });
 }
 
 const register = (req, res) => {
     const auth = getAuth();
     createUserWithEmailAndPassword(auth, req.body.email, req.body.password)
-    .then((userCredential) => {
-        // Signed up 
-        const user = userCredential.user;
-        // ...
-        res.status(201);
-        res.json({
-            'success': true,
-            'data':user,
-            'errors': null,
+        .then((userCredential) => {
+            // Signed up 
+            const user = userCredential.user;
+            // ...
+            res.status(201);
+            res.json({
+                'success': true,
+                'data': user,
+                'errors': null,
+            });
+        })
+        .catch((error) => {
+            const errorCode = error.code;
+            const errorMessage = error.message;
+            // ..
+            res.status(400);
+            res.json({
+                'success': false,
+                'errors': errorMessage,
+            });
         });
-    })
-    .catch((error) => {
-        const errorCode = error.code;
-        const errorMessage = error.message;
-        // ..
-        res.status(400);
-        res.json({
-            'success': false,
-            'errors': errorMessage,
-        });
-    });
 
 }
 
-const uploadImage = (req, res, next) => {
+const uploadImage = async (req, res) => {
+    multerMiddleware(req, res, async function (err) {
+    if (err) {
+        return res.status(500).json({ message: err.message });
+    }
+
     if (!req.file) {
         return res.status(400).json({ message: 'No image uploaded!' });
     }
 
     try {
         const imageFile = req.file;
-        
+
         // Validate the file
         if (!imageFile.originalname.match(/\.(jpg|jpeg|png)$/)) {
             return res.status(400).json({ message: 'Only image files are allowed!' });
@@ -164,20 +161,12 @@ const uploadImage = (req, res, next) => {
         res.json({ classId, predictionText });
 
         // // Delete the temporary file
-        // await fs.promises.unlink(imageFile.path);
+        await fs.promises.unlink(imageFile.path);
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'An error occurred while processing the image.' });
     }
-}, (error, req, res, next) => {
-    // This is the error handling middleware
-    if (error instanceof multer.MulterError) {
-        // A Multer error occurred when uploading.
-        res.status(500).json({ message: error.message });
-    } else if (error) {
-        // An unknown error occurred when uploading.
-        res.status(500).json({ message: error.message });
-    }
+});
 };
 
 const loadModel = async (req, res) => {
