@@ -1,75 +1,165 @@
-// Langkah 2: Setup Express.js Server
-
 const express = require('express');
-const multer = require('multer'); // Paket untuk meng-handle upload file
-const tf = require('@tensorflow/tfjs-node');
+const cors = require('cors');
+const multer = require('multer');
+const fs = require('fs');
 const path = require('path');
-const process = require('process');
-// config service account google cloud
-const serviceAccountPath = path.join(__dirname, 'config/config.json');
-
-process.env.GOOGLE_APPLICATION_CREDENTIALS = serviceAccountPath;
-
+const tf = require('@tensorflow/tfjs-node');
 const { Storage } = require('@google-cloud/storage');
+require('dotenv').config();
 
 const app = express();
+app.use(cors());
 const PORT = process.env.PORT || 3000;
 
-// Middleware untuk menangani form-data (foto dari mobile)
-const upload = multer({ dest: 'uploads/' });
+const uploadStorage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, './uploads/images')
+    },
+    filename: function (req, file, cb) {
+        cb(null, file.originalname)
+    }
+});
 
-// Route untuk menerima foto
-app.post('/upload-photo', upload.single('photo'), async (req, res) => {
-  try {
+const upload = multer({ storage: uploadStorage }).single('image');
+const modelName = process.env.MODEL_FILE_NAME;
+
+app.post('/uploadImage', upload, async (req, res, next) => {
     if (!req.file) {
-      return res.status(400).json({ error: 'No file uploaded' });
+        return res.status(400).json({ message: 'No image uploaded!' });
     }
 
-    // Ambil path foto yang di-upload
-    const photoPath = req.file.path;
+    try {
+        const imageFile = req.file;
+        
+        // Validate the file
+        if (!imageFile.originalname.match(/\.(jpg|jpeg|png)$/)) {
+            return res.status(400).json({ message: 'Only image files are allowed!' });
+        }
 
-    // Memuat model TensorFlow.js dari Google Cloud Storage
-    const model = await loadModelFromGCS('nama_model.h5');
+        // Create the photos directory if it doesn't exist
+        const files = fs.readdirSync('uploads/');
+        console.log('Files in photos:');
+        files.forEach(file => console.log(file));
 
-    // Proses foto menggunakan TensorFlow.js
-    const result = await processPhotoWithTF(photoPath, model);
+        // Read the image data
+        if (fs.existsSync(imageFile.path)) {
+            console.log(`File ${imageFile.path} exists!`);
+        } else {
+            console.error(`File ${imageFile.path} does not exist!`);
+        }
+        const imageBuffer = await fs.promises.readFile(imageFile.path);
 
-    // Panggil API rekomendasi dengan hasil dari TensorFlow.js
-    // Code untuk API rekomendasi akan diletakkan di sini
+        // Process the image
+        const imageTensor = tf.node.decodeImage(imageBuffer, 3);
+        const processedImage = await tf.image.resizeBilinear(imageTensor, [224, 224]); // Adjust dimensions as needed
+        const imageBatch = tf.expandDims(processedImage, 0);
 
-    // Kirimkan respons berupa hasil proses foto
-    res.json({ result });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+        // Load the model
+        const model = await loadModelFromGCS(modelName);
+        console.log('Model loaded successfully!');
+
+        // predict the class
+        const predictedClass = tf.tidy(() => {
+            const predictions = model.predict(imageBatch);
+            return predictions.as1D().argMax();
+        });
+
+        const classId = (await predictedClass.data())[0];
+
+        switch (classId) {
+            case 0:
+                predictionText = "Heart";
+                break;
+            case 1:
+                predictionText = "Round";
+                break;
+            case 2:
+                predictionText = "Square";
+                break;
+        }
+
+        res.json({ classId, predictionText });
+
+        // // Delete the temporary file
+        // await fs.promises.unlink(imageFile.path);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'An error occurred while processing the image.' });
+    }
+}, (error, req, res, next) => {
+    // This is the error handling middleware
+    if (error instanceof multer.MulterError) {
+        // A Multer error occurred when uploading.
+        res.status(500).json({ message: error.message });
+    } else if (error) {
+        // An unknown error occurred when uploading.
+        res.status(500).json({ message: error.message });
+    }
 });
 
-// Fungsi untuk memuat model dari Google Cloud Storage
+const storage = new Storage({
+    keyFilename: "./config/config.json",
+});
+
+// Func to load model from Google Cloud Storage
 async function loadModelFromGCS(modelName) {
-  const storage = new Storage();
-  const bucket = storage.bucket('nama_bucket');
+    const bucket = storage.bucket(process.env.GCS_BUCKET_MODEL_NAME);
 
-  const file = bucket.file(modelName);
-  const modelBuffer = await file.download();
+    // Create the photos directory if it doesn't exist
+    const uploadDir = path.join(__dirname, 'uploads');
+    if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir);
+    }
 
-  return tf.loadLayersModel(tf.node.decodeWeights(modelBuffer[0]));
+    // Download the model.json file
+    const modelFile = bucket.file(modelName);
+    const modelJsonPath = path.join(uploadDir, 'model.json');
+    if (!fs.existsSync(modelJsonPath)) {
+        const [modelJson] = await modelFile.download();
+        fs.writeFileSync(modelJsonPath, modelJson);
+    }
+
+    // Download the weights files
+    const [files] = await bucket.getFiles();
+    const weightsFiles = files.filter(file => file.name.startsWith('group') && file.name.endsWith('.bin'));
+    await Promise.all(weightsFiles.map(async (file) => {
+        if (file.name.endsWith('.bin')) {
+            const weightsFilePath = path.join(uploadDir, path.basename(file.name));
+            if (!fs.existsSync(weightsFilePath)) {
+                const [weights] = await file.download();
+                fs.writeFileSync(weightsFilePath, weights);
+                console.log(`Downloaded ${file.name} to ${weightsFilePath}`);
+            }
+        }
+    }));
+
+    // Load the model from the local files
+    const model = await tf.loadLayersModel('file://' + modelJsonPath);
+    // console.log(model.summary());
+    // console.log(model.getWeights());
+    // console.log(modelJsonPath);
+
+    return model;
 }
 
-// Fungsi untuk memproses foto dengan TensorFlow.js
-async function processPhotoWithTF(photoPath, model) {
-  // Code untuk memproses foto dengan TensorFlow.js akan diletakkan di sini
-  // Anda akan memuat foto, melakukan pre-processing, dan menggunakan model
-  // untuk mendapatkan hasil prediksi/gambar yang diproses
-  // Contoh: 
-  const image = await loadImage(photoPath);
-  const processedImage = model.predict(image);
-  return processedImage;
-}
-
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+app.get('/load-model', async (req, res) => {
+    try {
+        const model = await loadModelFromGCS(process.env.MODEL_FILE_NAME);
+        console.log('Model loaded successfully!');
+        res.status(200).json({ message: 'Model loaded successfully!' });
+    } catch (error) {
+        console.error('Error loading model:', error);
+        res.status(500).json({ message: 'Error loading model' });
+    }
 });
 
-// Langkah 3: Penanganan Gambar
+app.get('/model', async (req, res) => {
+    const modelJsonPath = path.join(__dirname, 'uploads', 'model.json');
+    res.sendFile(modelJsonPath);
+});
 
-// Langkah 4: Koneksi ke API Rekomendasi
+app.get('/', (req, res) => {
+    res.status(200).json({ message: 'API Server Alive!' });
+});
+
+app.listen(PORT, () => console.log('Server listening on port 3000'));
