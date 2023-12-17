@@ -1,6 +1,6 @@
 node_modules/
 package-*.json
-config/*
+config/cloud-storage.json
 .env
 uploads/model.json
 uploads/group*
