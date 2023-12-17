@@ -1,10 +1,11 @@
-const express = require('express');
+const fs = require('fs');
+const path = require('path');
+const tf = require('@tensorflow/tfjs-node');
 // const firebaseApp = require('../config/firebase');
 const { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } = require("firebase/auth");
-const multerMiddleware = require('../middleware/multerMiddleware');
+// const multerMiddleware = require('../middleware/multerMiddleware');
 const { Storage } = require('@google-cloud/storage');
 
-const modelName = process.env.MODEL_FILE_NAME;
 const storage = new Storage({
     keyFilename: "./config/cloud-storage.json",
 });
@@ -14,9 +15,17 @@ async function loadModelFromGCS(modelName) {
     const bucket = storage.bucket(process.env.GCS_BUCKET_MODEL_NAME);
 
     // Create the photos directory if it doesn't exist
-    const uploadDir = path.join(__dirname, 'uploads');
+    const uploadDir = path.join(__dirname, '..', 'uploads');
     if (!fs.existsSync(uploadDir)) {
         fs.mkdirSync(uploadDir);
+        console.log("Directory ", uploadDir, " has been created")
+    }
+
+    // Create the images directory if it doesn't exist
+    const imageDir = path.join(__dirname, '..', 'uploads/images');
+    if (!fs.existsSync(imageDir)) {
+        fs.mkdirSync(imageDir, { recursive: true });
+        console.log("Directory ", imageDir, " has been created")
     }
 
     // Download the model.json file
@@ -100,11 +109,6 @@ const register = (req, res) => {
 }
 
 const uploadImage = async (req, res) => {
-    multerMiddleware(req, res, async function (err) {
-    if (err) {
-        return res.status(500).json({ message: err.message });
-    }
-
     if (!req.file) {
         return res.status(400).json({ message: 'No image uploaded!' });
     }
@@ -116,11 +120,6 @@ const uploadImage = async (req, res) => {
         if (!imageFile.originalname.match(/\.(jpg|jpeg|png)$/)) {
             return res.status(400).json({ message: 'Only image files are allowed!' });
         }
-
-        // Create the photos directory if it doesn't exist
-        const files = fs.readdirSync('uploads/');
-        console.log('Files in photos:');
-        files.forEach(file => console.log(file));
 
         // Read the image data
         if (fs.existsSync(imageFile.path)) {
@@ -136,6 +135,7 @@ const uploadImage = async (req, res) => {
         const imageBatch = tf.expandDims(processedImage, 0);
 
         // Load the model
+        const modelName = process.env.MODEL_FILE_NAME;
         const model = await loadModelFromGCS(modelName);
         console.log('Model loaded successfully!');
 
@@ -167,7 +167,7 @@ const uploadImage = async (req, res) => {
         console.error(error);
         res.status(500).json({ message: 'An error occurred while processing the image.' });
     }
-});
+// });
 };
 
 const loadModel = async (req, res) => {
@@ -182,7 +182,7 @@ const loadModel = async (req, res) => {
 }
 
 const listModel = (req, res) => {
-    const modelJsonPath = path.join(__dirname, 'uploads', 'model.json');
+    const modelJsonPath = path.join(__dirname, '..', 'uploads', 'model.json');
     res.sendFile(modelJsonPath);
 }
 
