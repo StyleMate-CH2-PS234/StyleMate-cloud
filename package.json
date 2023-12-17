@@ -4,8 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
-    "dev": "node --trace-warnings --watch index.js",
+    "start": "node server.js",
+    "dev": "node --trace-warnings --watch server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
