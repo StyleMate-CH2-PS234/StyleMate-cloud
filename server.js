@@ -1,9 +1,13 @@
 const express = require('express');
-const userRoutes = require('./users/routes');
-const upImgRoutes = require('./users/upImg');
-const modelRoutes = require('./users/model');
+const cors = require('cors');
+const userRoutes = require('./routes/user');
+const upImgRoutes = require('./routes/upImg');
+const modelRoutes = require('./routes/model');
+require('dotenv').config();
 
+const PORT = process.env.PORT || 3000;
 const app = express();
+app.use(cors());
 app.use(express.json()) // for parsing application/json
 app.use(express.urlencoded({ extended: true })) // for parsing application/x-www-form-urlencoded
 app.use('/users', userRoutes);
