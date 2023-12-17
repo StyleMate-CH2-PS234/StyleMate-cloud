@@ -4,3 +4,5 @@ config/*
 .env
 uploads/model.json
 uploads/group*
+uploads/images/
+photos/
