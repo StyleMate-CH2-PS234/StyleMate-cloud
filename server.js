@@ -18,6 +18,31 @@ app.get('/', (req, res) => {
     res.status(200).json({ message: 'API Server Alive!' });
 });
 
+app.get('/ls', (req, res) => {
+    const lsdir = fs.readdirSync('./');
+    res.json(lsdir);
+});
+
+app.get('/ls/:dir', (req, res) => {
+    const dirPath = './' + req.params.dir;
+    try {
+        const lsdir = fs.readdirSync(dirPath);
+        res.json(lsdir);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+app.get('/ls/:dir/:dirr', (req, res) => {
+    const dirPath = './' + req.params.dir + '/' + req.params.dirr;
+    try {
+        const lsdir = fs.readdirSync(dirPath);
+        res.json(lsdir);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
 app.listen(PORT, () => {
     console.log(`Server listening on port ${PORT}`);
 });
