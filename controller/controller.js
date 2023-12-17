@@ -1,7 +1,8 @@
 const express = require('express');
 // const firebaseApp = require('../config/firebase');
 const { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } = require("firebase/auth");
-const multerMiddleware = require('./multerMiddleware');
+const multerMiddleware = require('../middleware/multerMiddleware');
+const { Storage } = require('@google-cloud/storage');
 
 const modelName = process.env.MODEL_FILE_NAME;
 const storage = new Storage({
