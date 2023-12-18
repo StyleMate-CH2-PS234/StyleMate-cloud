@@ -189,6 +189,7 @@ const listModel = (req, res) => {
 }
 
 const getNearby = (req, res) => {
+    const mapsApiKey = process.env.MAPS_API_KEY;
     const keyword = req.params.keyword;
     const location = req.params.location;
     const radius = 5000; // search within 5000 meters
