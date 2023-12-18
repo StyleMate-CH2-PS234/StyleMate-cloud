@@ -1,10 +1,12 @@
 const fs = require('fs');
 const path = require('path');
+const fetch = require('node-fetch');
 const tf = require('@tensorflow/tfjs-node');
 // const firebaseApp = require('../config/firebase');
 const { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } = require("firebase/auth");
 // const multerMiddleware = require('../middleware/multerMiddleware');
 const { Storage } = require('@google-cloud/storage');
+const mapsApiKey = process.env.MAPS_API_KEY;
 
 const storage = new Storage({
     keyFilename: "./config/cloud-storage.json",
@@ -167,7 +169,7 @@ const uploadImage = async (req, res) => {
         console.error(error);
         res.status(500).json({ message: 'An error occurred while processing the image.' });
     }
-// });
+    // });
 };
 
 const loadModel = async (req, res) => {
@@ -186,10 +188,62 @@ const listModel = (req, res) => {
     res.sendFile(modelJsonPath);
 }
 
+const getNearby = (req, res) => {
+    const keyword = req.params.keyword;
+    const location = req.params.location;
+    const radius = 5000; // search within 5000 meters
+    let photo_reference = null;
+
+    // Get nearby places of the specified type
+    fetch(`https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${location}&radius=${radius}&keyword=${keyword}&key=${mapsApiKey}`)
+        .then(response => response.json())
+        .then(data => {
+            const places = data.results;
+            const detailsPromises = places.map(place => {
+                // Get details for each place
+                return fetch(`https://maps.googleapis.com/maps/api/place/details/json?place_id=${place.place_id}&fields=url,name,formatted_phone_number,rating,photos&key=${mapsApiKey}`)
+                    .then(response => response.json())
+                    .then(data => data.result);
+            });
+
+            Promise.all(detailsPromises)
+                .then(details => {
+                    const imagePromises = details.map(detail => {
+                        const { photos, ...otherDetails } = detail;
+
+                        if (photos && photos.length > 0) {
+                            const photoPromises = photos.slice(0, 3).map(photo => {
+                                return fetch(`https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${photo.photo_reference}&key=${mapsApiKey}`)
+                                    .then(response => response.url);
+                            });
+
+                            return Promise.all(photoPromises)
+                                .then(imageUrls => {
+                                    return { ...otherDetails, imageUrls };
+                                });
+                        } else {
+                            return Promise.resolve(otherDetails);
+                        }
+                    });
+
+                    Promise.all(imagePromises)
+                        .then(detailsWithImages => {
+                            res.json({
+                                error: false,
+                                message: `Nearby ${keyword} fetched successfully`,
+                                [`list ${keyword}`]: detailsWithImages
+                            });
+                        });
+                });
+        })
+        .catch(err => res.status(500).json({ message: 'An error occurred while fetching nearby places.' }));
+}
+
 module.exports = {
     login,
     register,
     loadModel,
     listModel,
-    uploadImage
+    uploadImage,
+    getNearby
 }

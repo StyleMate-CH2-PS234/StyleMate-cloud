@@ -4,7 +4,7 @@ const fs = require('fs');
 const userRoutes = require('./routes/user');
 const upImgRoutes = require('./routes/upImg');
 const modelRoutes = require('./routes/model');
-const barberRoutes = require('./routes/barber');
+const placeRoute = require('./routes/place');
 require('dotenv').config();
 
 const PORT = process.env.PORT || 3000;
@@ -15,7 +15,7 @@ app.use(express.urlencoded({ extended: true })) // for parsing application/x-www
 app.use('/auth', userRoutes);
 app.use('/upload', upImgRoutes);
 app.use('/model', modelRoutes);
-app.use('/place', barberRoutes);
+app.use('/place', placeRoute);
 
 app.get('/', (req, res) => {
     res.status(200).json({ message: 'API Server Alive!' });
