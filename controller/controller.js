@@ -202,9 +202,20 @@ const getNearby = (req, res) => {
             const places = data.results;
             const detailsPromises = places.map(place => {
                 // Get details for each place
-                return fetch(`https://maps.googleapis.com/maps/api/place/details/json?place_id=${place.place_id}&fields=url,name,formatted_phone_number,rating,photos&key=${mapsApiKey}`)
+                return fetch(`https://maps.googleapis.com/maps/api/place/details/json?place_id=${place.place_id}&fields=url,name,formatted_phone_number,rating,photos,geometry&key=${mapsApiKey}`)
                     .then(response => response.json())
-                    .then(data => data.result);
+                    .then(data => {
+                            const location = data.result.geometry.location;
+                            return {
+                                ...data.result,
+                                geometry: {
+                                    location: {
+                                        lat: location.lat,
+                                        lng: location.lng
+                                    }
+                                }
+                            };
+                    });
             });
 
             Promise.all(detailsPromises)
