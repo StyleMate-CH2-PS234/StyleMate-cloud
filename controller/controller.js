@@ -4,6 +4,7 @@ const fetch = require('node-fetch');
 const tf = require('@tensorflow/tfjs-node');
 const firebaseApp = require('../config/firebase');
 const { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } = require("firebase/auth");
+const { getStorage, ref, uploadBytes, getDownloadURL } = require("firebase/storage");
 // const multerMiddleware = require('../middleware/multerMiddleware');
 const { Storage } = require('@google-cloud/storage');
 const mapsApiKey = process.env.MAPS_API_KEY;
