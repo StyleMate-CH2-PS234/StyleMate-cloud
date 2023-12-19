@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const fetch = require('node-fetch');
 const tf = require('@tensorflow/tfjs-node');
-// const firebaseApp = require('../config/firebase');
+const firebaseApp = require('../config/firebase');
 const { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } = require("firebase/auth");
 // const multerMiddleware = require('../middleware/multerMiddleware');
 const { Storage } = require('@google-cloud/storage');
@@ -251,11 +251,76 @@ const getNearby = (req, res) => {
         .catch(err => res.status(500).json({ message: 'An error occurred while fetching nearby places.' }));
 }
 
+const changePassword = (req, res) =>{
+    const email = req.headers['email']
+    const password = req.headers['password']
+    const auth = getAuth()
+
+    signInWithEmailAndPassword(auth, email, password)
+    .then( async (userCredential) => {
+        // Signed in 
+        const user = userCredential.user;
+
+        await updatePassword(user, req.body.password)
+        // ...
+        res.status(200);
+        res.json({
+            'success': true,
+            'data': user,
+            'errors': null
+        });
+    })
+    .catch((error) => {
+        const errorCode = error.code;
+        const errorMessage = error.message;
+        res.status(200);
+        res.json({
+            'success': false,
+            'errors': errorMessage,
+        });
+    });
+
+}
+
+const changeName = (req, res) => {
+    const email = req.headers['email']
+    const password = req.headers['password']
+    const auth = getAuth()
+
+    signInWithEmailAndPassword(auth, email, password)
+    .then( async (userCredential) => {
+        // Signed in 
+        const user = userCredential.user;
+
+        await updateProfile(user, {
+            displayName: req.body.name
+        })
+        // ...
+        res.status(200);
+        res.json({
+            'success': true,
+            'data': user,
+            'errors': null
+        });
+    })
+    .catch((error) => {
+        const errorCode = error.code;
+        const errorMessage = error.message;
+        res.status(200);
+        res.json({
+            'success': false,
+            'errors': errorMessage,
+        });
+    });
+}
+
 module.exports = {
     login,
     register,
     loadModel,
     listModel,
     uploadImage,
-    getNearby
+    getNearby,
+    changePassword,
+    changeName
 }
