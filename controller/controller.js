@@ -314,6 +314,70 @@ const changeName = (req, res) => {
     });
 }
 
+
+const changePhoto = async (req, res) => {
+    if (!req.file) {
+        return res.status(400).json({ message: 'No image uploaded!' });
+    }
+
+    try {
+
+        const email = req.headers['email'];
+        const password = req.headers['password'];
+
+        const auth = getAuth();
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+        
+
+        const imageFile = req.file;
+
+        // Validate the file
+        if (!imageFile.originalname.match(/\.(jpg|jpeg|png)$/)) {
+            return res.status(400).json({ message: 'Only image files are allowed!' });
+        }
+
+        // Read the image data
+        if (fs.existsSync(imageFile.path)) {
+            console.log(`File ${imageFile.path} exists!`);
+        } else {
+            console.error(`File ${imageFile.path} does not exist!`);
+        }
+
+
+        const imageBuffer = await fs.promises.readFile(imageFile.path);
+
+
+        // upload ke firebase
+        const storage = getStorage(firebaseApp);
+        const storageRef = ref(storage, `${user.email}.jpg`)
+
+        await uploadBytes(storageRef, imageBuffer, {
+            contentType: 'image/jpeg',
+        })
+
+
+        const photoUrl = await getDownloadURL(storageRef)
+
+        await updateProfile(user, {
+            photoURL : photoUrl
+        })
+
+        res.status(200);
+        res.json({
+            'success': true,
+            'data': user,
+            'errors': null
+        });
+        
+        // // Delete the temporary file
+        await fs.promises.unlink(imageFile.path);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'An error occurred while processing the image.' });
+    }
+}
+
 module.exports = {
     login,
     register,
@@ -322,5 +386,6 @@ module.exports = {
     uploadImage,
     getNearby,
     changePassword,
-    changeName
+    changeName,
+    changePhoto,
 }
