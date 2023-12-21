@@ -12,16 +12,26 @@
 
 ### Steps to run:
 1. **Clone the repository**: Clone repo it to your local machine using 
-   ```git clone https://github.com/shuyshuys/StyleMate-cloud``` 
+   ```bash
+   git clone https://github.com/shuyshuys/StyleMate-cloud
+   ``` 
 or you can download it to zip via github web.
 2. **Navigate to the project directory**: Use the command `cd StyleMate-cloud` to navigate into the root directory of the project.
-   ```cd StyleMate-cloud``` 
+   ```bash
+   cd StyleMate-cloud
+   ``` 
 3. **Install dependencies**: Run `npm install` to install all the project dependencies specified in the `package.json` file.
-   ```npm install```
+   ```bash
+   npm install
+   ```
 4. **Set up environment variables**: This project use .env to store some variable, make sure to set them up. make a copy of `.env.example` to `.env` and enter the required variable data. 
-   ```cp .env.example .env```
+   ```bash
+   cp .env.example .env
+   ```
 5. **Start the server**: Run `npm start` to start the Express.js server.
-   ```npm start```
+   ```bash
+   npm start
+   ```
 6. **Test the API**: Once the server is running, you can test the API endpoints. You can do this using tool like Postman.
 7. **Stop the server**: When you're done, you can stop the server by pressing `Ctrl+C` in the terminal where the server is running.
 <br>
