@@ -195,6 +195,28 @@ const loadModel = async (req, res) => {
     }
 }
 
+const updateModel = async (req, res) => {
+    try {
+        // remove existing model
+        const uploadDir = path.join(__dirname, '..', 'uploads');
+        const modelJsonPath = path.join(uploadDir, 'model.json');
+        const weightsFiles = fs.readdirSync(uploadDir).filter(file => file.startsWith('group') && file.endsWith('.bin'));
+        fs.unlinkSync(modelJsonPath);
+        console.log(`Deleted ${modelJsonPath}`);
+        weightsFiles.forEach(file => {
+            fs.unlinkSync(path.join(uploadDir, file));
+            console.log(`Deleted ${uploadDir}/${file}`);
+        });
+        // download new model
+        const model = await loadModelFromGCS(process.env.MODEL_FILE_NAME);
+        console.log('Model update successfully!');
+        res.status(200).json({ message: 'Model update successfully!' });
+    } catch (error) {
+        console.error('Error updating model:', error);
+        res.status(500).json({ message: 'Error updating model' });
+    }
+}
+
 const listModel = (req, res) => {
     const modelJsonPath = path.join(__dirname, '..', 'uploads', 'model.json');
     res.sendFile(modelJsonPath);
@@ -410,6 +432,7 @@ module.exports = {
     login,
     register,
     loadModel,
+    updateModel,
     listModel,
     uploadImage,
     getNearby,
