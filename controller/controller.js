@@ -391,6 +391,16 @@ const changePhoto = async (req, res) => {
     }
 }
 
+const getMaps = (req, res) => {
+    try {
+    const modelJsonPath = path.join(__dirname, '..', 'config', 'map.json');
+    res.sendFile(modelJsonPath);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'An error occurred while sending map.json.' });
+    }
+}
+
 module.exports = {
     login,
     register,
@@ -398,6 +408,7 @@ module.exports = {
     listModel,
     uploadImage,
     getNearby,
+    getMaps,
     changePassword,
     changeName,
     changePhoto,
