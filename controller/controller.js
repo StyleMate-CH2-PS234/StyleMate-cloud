@@ -86,10 +86,15 @@ const login = (req, res) => {
 const register = (req, res) => {
     const auth = getAuth();
     createUserWithEmailAndPassword(auth, req.body.email, req.body.password)
-        .then((userCredential) => {
+        .then(async (userCredential) => {
             // Signed up 
             const user = userCredential.user;
             // ...
+
+            await updateProfile(user, {
+                displayName: req.body.name
+            })
+
             res.status(201);
             res.json({
                 'success': true,
@@ -393,8 +398,8 @@ const changePhoto = async (req, res) => {
 
 const getMaps = (req, res) => {
     try {
-    const modelJsonPath = path.join(__dirname, '..', 'config', 'map.json');
-    res.sendFile(modelJsonPath);
+        const modelJsonPath = path.join(__dirname, '..', 'config', 'map.json');
+        res.sendFile(modelJsonPath);
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'An error occurred while sending map.json.' });
