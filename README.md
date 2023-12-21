@@ -54,11 +54,6 @@ This project includes a Dockerfile that allows you to create a Docker image of t
 6. **Stop the Docker container**: When you're done, you can stop the Docker container by pressing `Ctrl+C` in the terminal where the container is running. Alternatively, you can find the container ID with `docker ps`, then run `docker stop <container-id>`.
 <br>
 
-### Steps to test:
-1. 
-
-<br>
-
 ## StyleMate TIM
 <br> 
 Here's the StyleMate development team:
