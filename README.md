@@ -11,12 +11,20 @@
 <br>
 
 ### Steps to run:
-1. **Clone the repository**: Clone repo it to your local machine using ```git clone https://github.com/shuyshuys/StyleMate-cloud``` or you can download it to zip via github web.
-2. **Navigate to the project directory**: Use the command ```cd StyleMate-cloud``` to navigate into the root directory of the project.
-3. **Install dependencies**: Run ```npm install``` to install all the project dependencies specified in the `package.json` file.
+1. **Clone the repository**: 
+Clone repo it to your local machine using 
+```git clone https://github.com/shuyshuys/StyleMate-cloud``` 
+or you can download it to zip via github web.
+2. **Navigate to the project directory**: 
+Use the command `cd StyleMate-cloud` to navigate into the root directory of the project.
+```cd StyleMate-cloud``` 
+3. **Install dependencies**: 
+Run `npm install` to install all the project dependencies specified in the `package.json` file.
+```npm install```
 4. **Set up environment variables**: This project use .env to store some variable, make sure to set them up. make a copy of `.env.example` to `.env` and enter the required variable data. 
 ```cp .env.example .env```
-5. **Start the server**: Run ```npm start``` to start the Express.js server.
+5. **Start the server**: Run `npm start` to start the Express.js server.
+```npm start```
 6. **Test the API**: Once the server is running, you can test the API endpoints. You can do this using tool like Postman.
 7. **Stop the server**: When you're done, you can stop the server by pressing `Ctrl+C` in the terminal where the server is running.
 <br>
@@ -24,18 +32,19 @@
 ### Deployment with Docker
 This project includes a Dockerfile that allows you to create a Docker image of the application and run it in a Docker container. Here are the steps to do this:
 1. **Install Docker**: If you haven't already, first [install Docker](https://docs.docker.com/get-docker/) on your machine.
-2. **Build the Docker image**: Navigate to the project directory in your terminal and run the following command to build a Docker image:
+2. **Make sure already in directory of StyleMate-cloud**
+3. **Build the Docker image**: Navigate to the project directory in your terminal and run the following command to build a Docker image:
     ```bash
     docker build -t stylemate-api .
     ```
     This command builds a Docker image using the Dockerfile in the current directory, and tags it with the name "stylemate-api". You can replace "stylemate-api" with whatever name you want to give your Docker image.
-3. **Run the Docker container**: Once the image is built, you can run it in a Docker container with the following command:
+4. **Run the Docker container**: Once the image is built, you can run it in a Docker container with the following command:
     ```bash
     docker run -p 3000:3000 stylemate-api
     ```
     This command starts a Docker container from the "stylemate-api" image, and maps port 3000 in the container to port 3000 on your machine. You can replace "3000:3000" with whatever port mapping you want to use. If you want make image run persistent on background, add `-d` when running it.
-4. **Access the application**: Once the Docker container is running, you can access the application by navigating to `http://localhost:3000` in your web browser (or replace "3000" with whatever port you mapped to in the previous step).
-5. **Stop the Docker container**: When you're done, you can stop the Docker container by pressing `Ctrl+C` in the terminal where the container is running. Alternatively, you can find the container ID with `docker ps`, then run `docker stop <container-id>`.
+5. **Access the application**: Once the Docker container is running, you can access the application by navigating to `http://localhost:3000` in your web browser (or replace "3000" with whatever port you mapped to in the previous step).
+6. **Stop the Docker container**: When you're done, you can stop the Docker container by pressing `Ctrl+C` in the terminal where the container is running. Alternatively, you can find the container ID with `docker ps`, then run `docker stop <container-id>`.
 <br>
 
 ### Steps to test:
