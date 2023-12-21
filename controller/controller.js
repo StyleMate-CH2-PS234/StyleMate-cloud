@@ -5,7 +5,6 @@ const tf = require('@tensorflow/tfjs-node');
 const firebaseApp = require('../config/firebase');
 const { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile, updatePassword } = require("firebase/auth");
 const { getStorage, ref, uploadBytes, getDownloadURL } = require("firebase/storage");
-// const multerMiddleware = require('../middleware/multerMiddleware');
 const { Storage } = require('@google-cloud/storage');
 const mapsApiKey = process.env.MAPS_API_KEY;
 
@@ -121,6 +120,12 @@ const uploadImage = async (req, res) => {
 
         // Validate the file
         if (!imageFile.originalname.match(/\.(jpg|jpeg|png)$/)) {
+            try {
+                await fs.promises.unlink(pathToFile);
+                console.log('Temporary file deleted');
+            } catch (err) {
+                console.error(`Error deleting file: ${err}`);
+            }
             return res.status(400).json({ message: 'Only image files are allowed!' });
         }
 
@@ -148,8 +153,10 @@ const uploadImage = async (req, res) => {
             return predictions.as1D().argMax();
         });
 
+        // Get the class id
         const classId = (await predictedClass.data())[0];
 
+        // Get the class name
         switch (classId) {
             case 0:
                 predictionText = "Heart";
@@ -170,7 +177,6 @@ const uploadImage = async (req, res) => {
         console.error(error);
         res.status(500).json({ message: 'An error occurred while processing the image.' });
     }
-    // });
 };
 
 const loadModel = async (req, res) => {
@@ -206,16 +212,16 @@ const getNearby = (req, res) => {
                 return fetch(`https://maps.googleapis.com/maps/api/place/details/json?place_id=${place.place_id}&fields=url,name,formatted_phone_number,rating,photos,geometry&key=${mapsApiKey}`)
                     .then(response => response.json())
                     .then(data => {
-                            const location = data.result.geometry.location;
-                            return {
-                                ...data.result,
-                                geometry: {
-                                    location: {
-                                        lat: location.lat,
-                                        lng: location.lng
-                                    }
+                        const location = data.result.geometry.location;
+                        return {
+                            ...data.result,
+                            geometry: {
+                                location: {
+                                    lat: location.lat,
+                                    lng: location.lng
                                 }
-                            };
+                            }
+                        };
                     });
             });
 
@@ -252,34 +258,34 @@ const getNearby = (req, res) => {
         .catch(err => res.status(500).json({ message: 'An error occurred while fetching nearby places.' }));
 }
 
-const changePassword = (req, res) =>{
+const changePassword = (req, res) => {
     const email = req.headers['email']
     const password = req.headers['password']
     const auth = getAuth()
 
     signInWithEmailAndPassword(auth, email, password)
-    .then( async (userCredential) => {
-        // Signed in 
-        const user = userCredential.user;
+        .then(async (userCredential) => {
+            // Signed in 
+            const user = userCredential.user;
 
-        await updatePassword(user, req.body.password)
-        // ...
-        res.status(200);
-        res.json({
-            'success': true,
-            'data': user,
-            'errors': null
+            await updatePassword(user, req.body.password)
+            // ...
+            res.status(200);
+            res.json({
+                'success': true,
+                'data': user,
+                'errors': null
+            });
+        })
+        .catch((error) => {
+            const errorCode = error.code;
+            const errorMessage = error.message;
+            res.status(200);
+            res.json({
+                'success': false,
+                'errors': errorMessage,
+            });
         });
-    })
-    .catch((error) => {
-        const errorCode = error.code;
-        const errorMessage = error.message;
-        res.status(200);
-        res.json({
-            'success': false,
-            'errors': errorMessage,
-        });
-    });
 
 }
 
@@ -289,30 +295,30 @@ const changeName = (req, res) => {
     const auth = getAuth()
 
     signInWithEmailAndPassword(auth, email, password)
-    .then( async (userCredential) => {
-        // Signed in 
-        const user = userCredential.user;
+        .then(async (userCredential) => {
+            // Signed in 
+            const user = userCredential.user;
 
-        await updateProfile(user, {
-            displayName: req.body.name
+            await updateProfile(user, {
+                displayName: req.body.name
+            })
+            // ...
+            res.status(200);
+            res.json({
+                'success': true,
+                'data': user,
+                'errors': null
+            });
         })
-        // ...
-        res.status(200);
-        res.json({
-            'success': true,
-            'data': user,
-            'errors': null
+        .catch((error) => {
+            const errorCode = error.code;
+            const errorMessage = error.message;
+            res.status(200);
+            res.json({
+                'success': false,
+                'errors': errorMessage,
+            });
         });
-    })
-    .catch((error) => {
-        const errorCode = error.code;
-        const errorMessage = error.message;
-        res.status(200);
-        res.json({
-            'success': false,
-            'errors': errorMessage,
-        });
-    });
 }
 
 
@@ -329,12 +335,18 @@ const changePhoto = async (req, res) => {
         const auth = getAuth();
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
-        
+
 
         const imageFile = req.file;
 
         // Validate the file
         if (!imageFile.originalname.match(/\.(jpg|jpeg|png)$/)) {
+            try {
+                await fs.promises.unlink(pathToFile);
+                console.log('Temporary file deleted');
+            } catch (err) {
+                console.error(`Error deleting file: ${err}`);
+            }
             return res.status(400).json({ message: 'Only image files are allowed!' });
         }
 
@@ -349,7 +361,7 @@ const changePhoto = async (req, res) => {
         const imageBuffer = await fs.promises.readFile(imageFile.path);
 
 
-        // upload ke firebase
+        // Upload the image to Cloud Storage
         const storage = getStorage(firebaseApp);
         const storageRef = ref(storage, `${user.email}.jpg`)
 
@@ -357,11 +369,11 @@ const changePhoto = async (req, res) => {
             contentType: 'image/jpeg',
         })
 
-
+        // Get the public URL of the image
         const photoUrl = await getDownloadURL(storageRef)
 
         await updateProfile(user, {
-            photoURL : photoUrl
+            photoURL: photoUrl
         })
 
         res.status(200);
@@ -370,7 +382,7 @@ const changePhoto = async (req, res) => {
             'data': user,
             'errors': null
         });
-        
+
         // // Delete the temporary file
         await fs.promises.unlink(imageFile.path);
     } catch (error) {
