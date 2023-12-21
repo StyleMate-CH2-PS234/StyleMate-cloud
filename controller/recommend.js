@@ -3,7 +3,7 @@ require('dotenv').config();
 
 const bucketName = process.env.GCS_BUCKET_NAME;
 
-const recommend = (req, res) => {
+const recommendModel = (req, res) => {
   const faceClassification = req.query.face; // Get the face classification from the query parameters
   const directoryPath = `${faceClassification}/`; // Construct the directory path
 
@@ -34,5 +34,5 @@ const recommend = (req, res) => {
 };
 
 module.exports = {
-    recommend
+    recommendModel
 }
