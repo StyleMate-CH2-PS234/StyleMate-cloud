@@ -5,7 +5,7 @@ const bucketName = process.env.GCS_BUCKET_NAME;
 
 const recommendModel = (req, res) => {
   const faceClassification = req.query.face; // Get the face classification from the query parameters
-  const directoryPath = `${faceClassification}/`; // Construct the directory path
+  const directoryPath = `./uploads/recommend/${faceClassification}/`; // Construct the directory path
 
     // Create a client
     const storage = new Storage({
