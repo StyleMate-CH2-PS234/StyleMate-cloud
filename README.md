@@ -11,15 +11,12 @@
 <br>
 
 ### Steps to run:
-1. **Clone the repository**: 
-Clone repo it to your local machine using 
+1. **Clone the repository**: Clone repo it to your local machine using 
 ```git clone https://github.com/shuyshuys/StyleMate-cloud``` 
 or you can download it to zip via github web.
-2. **Navigate to the project directory**: 
-Use the command `cd StyleMate-cloud` to navigate into the root directory of the project.
+2. **Navigate to the project directory**: Use the command `cd StyleMate-cloud` to navigate into the root directory of the project.
 ```cd StyleMate-cloud``` 
-3. **Install dependencies**: 
-Run `npm install` to install all the project dependencies specified in the `package.json` file.
+3. **Install dependencies**: Run `npm install` to install all the project dependencies specified in the `package.json` file.
 ```npm install```
 4. **Set up environment variables**: This project use .env to store some variable, make sure to set them up. make a copy of `.env.example` to `.env` and enter the required variable data. 
 ```cp .env.example .env```
