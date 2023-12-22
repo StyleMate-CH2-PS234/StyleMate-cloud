@@ -57,6 +57,7 @@ This project includes a Dockerfile that allows you to create a Docker image of t
 ## StyleMate TIM
 <br> 
 Here's the StyleMate development team:
+
 | Nama                    | Role                      |
 |-------------------------|---------------------------|
 | Rizka Fiddiyansyah      | Machine Learning          |
