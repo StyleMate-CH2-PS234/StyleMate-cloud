@@ -74,5 +74,8 @@ Here's the StyleMate development team:
 Project finalized on December 22, 2023, closed to contributions.
 <br>
 
+## Contact Information
+If you have any questions or feedback, please contact the developer at stylemate@ahmadyaz.my.id.
+
 ## End
 Thank you for exploring the StyleMate-cloud repository. We hope you find joy in this collection of code. Enjoy using it!
