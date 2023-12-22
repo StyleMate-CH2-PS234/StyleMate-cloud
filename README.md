@@ -1,4 +1,19 @@
 # Guide to Use StyleMate-cloud Backend API
+## StyleMate TIM
+Here's the StyleMate development team:
+
+| Nama                    | Role               |  University       |                      
+| ----------------------- | ------------------ | ------------------ |
+| Rizka Fiddiyansyah      | Machine Learning   | Universitas Pembangunan Nasional Veteran Jawa Timur |              
+| Abulkhair Rizvan Yahya  | Machine Learning   | Politeknik Elektronika Negeri Surabaya |                     
+| Erlangga Yudi Pradana   | Machine Learning   | Politeknik Elektronika Negeri Surabaya |                    
+| Ahmad Yazid Isnandar    | Cloud Computing    | Universitas Pembangunan Nasional Veteran Jawa Timur |                     
+| Rayyan Nur Fauzan       | Cloud Computing    | Universitas Negeri Surabaya |                      
+| Rohmat Ubaidillah Fahmi | Mobile Development | Universitas Pembangunan Nasional Veteran Jawa Timur |                 
+| Dias Khairul Ihsan      | Mobile Development | Universitas Muhammadiyah Surakarta |
+
+<br>
+
 ## How to run on a local computer
 <br>
 
@@ -52,21 +67,6 @@ This project includes a Dockerfile that allows you to create a Docker image of t
     This command starts a Docker container from the "stylemate-api" image, and maps port 3000 in the container to port 3000 on your machine. You can replace "3000:3000" with whatever port mapping you want to use. If you want make image run persistent on background, add `-d` when running it.
 5. **Access the application**: Once the Docker container is running, you can access the application by navigating to `http://localhost:3000` in your web browser (or replace "3000" with whatever port you mapped to in the previous step).
 6. **Stop the Docker container**: When you're done, you can stop the Docker container by pressing `Ctrl+C` in the terminal where the container is running. Alternatively, you can find the container ID with `docker ps`, then run `docker stop <container-id>`.
-<br>
-
-## StyleMate TIM
-<br> 
-Here's the StyleMate development team:
-
-| Nama                    | Role                      |
-|-------------------------|---------------------------|
-| Rizka Fiddiyansyah      | Machine Learning          |
-| Abulkhair Rizvan Yahya  | Machine Learning          |
-| Erlangga Yudi Pradana   | Machine Learning          |
-| Ahmad Yazid Isnandar    | Cloud Computing           |
-| Rayyan Nur Fauzan       | Cloud Computing           |
-| Rohmat Ubaidillah Fahmi | Mobile Development        |
-| Dias Khairul Ihsan      | Mobile Development        |
 
 <br>
 
