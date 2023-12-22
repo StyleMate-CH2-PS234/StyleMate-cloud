@@ -1,5 +1,5 @@
 # Guide to Use StyleMate-cloud Backend API
-## StyleMate TIM
+## StyleMate Team
 Here's the StyleMate development team:
 
 | Nama                    | Role               |  University       |                      
