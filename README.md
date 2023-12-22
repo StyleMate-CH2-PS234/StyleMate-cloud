@@ -2,7 +2,7 @@
 ## StyleMate Team
 Here's the StyleMate development team:
 
-| Nama                    | Role               |  University       |                      
+| Name                    | Role               |  University       |                      
 | ----------------------- | ------------------ | ------------------ |
 | Rizka Fiddiyansyah      | Machine Learning   | Universitas Pembangunan Nasional Veteran Jawa Timur |              
 | Abulkhair Rizvan Yahya  | Machine Learning   | Politeknik Elektronika Negeri Surabaya |                     
